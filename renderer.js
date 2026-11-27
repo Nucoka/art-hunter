@@ -19,20 +19,21 @@ const DEFAULT_SETTINGS = {
   smart: true
 };
 const DEFAULT_THEME = {
-  bg: '#12121a', panel: '#1c1c2a', accent: '#a970ff', accent2: '#ff85bf',
+  bg: '#12121a', panel: '#1c1c2a', text: '#f4f4f7', muted: '#9a9aae',
+  accent: '#a970ff', accent2: '#ff85bf',
   panelAlpha: 100, topAlpha: 86, radius: 10, cell: 175, fit: 'contain', line: 1.8,
   windowAlpha: 100, windowRadius: 14
 };
 const THEME_PRESETS = {
   dark: { ...DEFAULT_THEME },
-  light: { ...DEFAULT_THEME, bg: '#eceef4', panel: '#ffffff', accent: '#6d4aff', accent2: '#e2569b', panelAlpha: 98, topAlpha: 94, radius: 12, line: 1.7 },
-  neon: { ...DEFAULT_THEME, bg: '#080816', panel: '#12102a', accent: '#39ffd0', accent2: '#ff4fd8', panelAlpha: 92, topAlpha: 80, radius: 14 },
-  berry: { ...DEFAULT_THEME, bg: '#1c0e18', panel: '#2a1424', accent: '#ff6b9d', accent2: '#ffc371', panelAlpha: 96, topAlpha: 88 },
-  mint: { ...DEFAULT_THEME, bg: '#0e1a18', panel: '#152824', accent: '#5eead4', accent2: '#a3e635', panelAlpha: 96, topAlpha: 88 },
-  graphite: { ...DEFAULT_THEME, bg: '#151515', panel: '#222222', accent: '#b8b8b8', accent2: '#8ab4f8', panelAlpha: 100, topAlpha: 92, radius: 6, line: 1.6 }
+  light: { ...DEFAULT_THEME, bg: '#eceef4', panel: '#ffffff', text: '#22222f', muted: '#686880', accent: '#6d4aff', accent2: '#e2569b', panelAlpha: 98, topAlpha: 94, radius: 12, line: 1.7 },
+  neon: { ...DEFAULT_THEME, bg: '#080816', panel: '#12102a', text: '#eaeaff', muted: '#9a9ac4', accent: '#39ffd0', accent2: '#ff4fd8', panelAlpha: 92, topAlpha: 80, radius: 14 },
+  berry: { ...DEFAULT_THEME, bg: '#1c0e18', panel: '#2a1424', text: '#ffeaf2', muted: '#c99aae', accent: '#ff6b9d', accent2: '#ffc371', panelAlpha: 96, topAlpha: 88 },
+  mint: { ...DEFAULT_THEME, bg: '#0e1a18', panel: '#152824', text: '#e8fff8', muted: '#8fbcae', accent: '#5eead4', accent2: '#a3e635', panelAlpha: 96, topAlpha: 88 },
+  graphite: { ...DEFAULT_THEME, bg: '#151515', panel: '#222222', text: '#f0f0f0', muted: '#9e9e9e', accent: '#b8b8b8', accent2: '#8ab4f8', panelAlpha: 100, topAlpha: 92, radius: 6, line: 1.6 }
 };
 const THEME_FIELDS = {
-  thBg: 'bg', thPanel: 'panel', thAccent: 'accent', thAccent2: 'accent2',
+  thBg: 'bg', thPanel: 'panel', thText: 'text', thMuted: 'muted', thAccent: 'accent', thAccent2: 'accent2',
   thPanelAlpha: 'panelAlpha', thTopAlpha: 'topAlpha', thRadius: 'radius',
   thCell: 'cell', thFit: 'fit', thLine: 'line',
   thWindowAlpha: 'windowAlpha', thWindowRadius: 'windowRadius'
@@ -90,6 +91,8 @@ function applyTheme() {
   const t = state.theme;
   root.setProperty('--bg', t.bg);
   root.setProperty('--panel', t.panel);
+  root.setProperty('--text', t.text);
+  root.setProperty('--muted', t.muted);
   root.setProperty('--accent', t.accent);
   root.setProperty('--accent-2', t.accent2);
   root.setProperty('--panel-bg', hexToRgba(t.panel, t.panelAlpha / 100));
