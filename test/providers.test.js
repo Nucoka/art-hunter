@@ -8,4 +8,6 @@ test('поиск возвращает картинки минимум из че�
   const bySource = new Set(result.items.map(i => i.source));
   assert.ok(bySource.size >= 4, `источники: ${[...bySource].join(',')}`);
   assert.ok(result.items.every(i => i.url && i.title !== undefined));
+  const yandex = result.items.find(i => i.source === 'yandex');
+  assert.ok(yandex?.page?.startsWith('http'), 'у Яндекса должна быть ссылка на источник');
 });

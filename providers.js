@@ -115,23 +115,26 @@ async function yandexSearch(query, page, prefix, source) {
   const text = prefix ? `${prefix} ${query}` : query;
   const url = 'https://yandex.com/images/search?text=' + encodeURIComponent(text) + `&pos=${(page - 1) * 30}`;
   const html = await httpGet(url);
-  const urls = [...html.matchAll(/&quot;origUrl&quot;:&quot;([^&]+)/g)].map(m => decodeEntities(m[1]));
-  const titles = [...html.matchAll(/&quot;snippet&quot;:\{&quot;title&quot;:&quot;([^&]+)/g)].map(m => decodeEntities(m[1]));
+  const matches = [...html.matchAll(/&quot;origUrl&quot;:&quot;([^&]+)/g)];
   const previews = [...html.matchAll(/&quot;preview&quot;:\[\{&quot;url&quot;:&quot;([^&]+)/g)].map(m => decodeEntities(m[1]));
   const widths = [...html.matchAll(/&quot;origWidth&quot;:(\d+)/g)].map(m => Number(m[1]));
   const heights = [...html.matchAll(/&quot;origHeight&quot;:(\d+)/g)].map(m => Number(m[1]));
-  return urls.map((image, i) => {
+  return matches.map((match, i) => {
+    const image = decodeEntities(match[1]);
+    const nearby = html.slice(Math.max(0, match.index - 2500), match.index + 2500);
+    const title = decodeEntities(nearby.match(/&quot;snippet&quot;:\{&quot;title&quot;:&quot;([^&]+)/)?.[1] || '');
+    const page = decodeEntities(nearby.match(/&quot;snippet&quot;:\{[^}]*?&quot;url&quot;:&quot;([^&]+)/)?.[1] || '');
     const thumb = previews[i] || image;
     return {
       id: 'y_' + image,
-      title: titles[i] || '',
+      title,
       url: image,
       thumb: thumb.startsWith('//') ? 'https:' + thumb : thumb,
-      page: '',
+      page,
       width: widths[i] || null,
       height: heights[i] || null,
       source,
-      tags: extractTags({ title: titles[i] })
+      tags: extractTags({ title })
     };
   });
 }

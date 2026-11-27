@@ -246,7 +246,7 @@ function runSearch(raw) {
 }
 
 async function primePages() {
-  for (let page = 2; page <= 8 && state.hasMore; page++) await loadPage(page);
+  for (let page = 2; page <= 5 && state.hasMore; page++) await loadPage(page);
 }
 
 async function loadPage(page) {
@@ -365,8 +365,9 @@ function render() {
   state.visible = items;
   $('grid').innerHTML = items.map((item, index) => `
     <article class="card" style="animation-delay:${Math.min(index, 24) * 18}ms">
-      <img src="${esc(item.thumb || item.url)}" alt="${esc(item.title)}" loading="lazy"
-           onerror="this.style.opacity='0.15'">
+      <img src="${esc(item.thumb || item.url)}" alt="${esc(item.title)}"
+           loading="${index < 16 ? 'eager' : 'lazy'}" ${index < 16 ? 'fetchpriority="high"' : ''}
+           decoding="async" referrerpolicy="no-referrer" onerror="this.style.opacity='0.15'">
       <span class="badge">${esc(SOURCE_NAMES[item.source] || item.source || '')}</span>
       <div class="thumb-actions">
         <button class="card-action" data-act="hide" data-index="${index}" title="Скрыть"><svg><use href="#i-close"/></svg></button>
@@ -388,7 +389,7 @@ $('grid').addEventListener('click', event => {
     if (btn.dataset.act === 'fav') toggleFav(item);
     if (btn.dataset.act === 'download') downloadItem(item);
     if (btn.dataset.act === 'hide') hideItem(item);
-    if (btn.dataset.act === 'open' && item.page) window.api.openExternal(item.page);
+    if (btn.dataset.act === 'open') openSource(item);
     return;
   }
   const card = event.target.closest('.card');
@@ -414,6 +415,16 @@ function hideItem(item) {
   applyFilters();
 }
 
+async function openSource(item) {
+  const url = item.page || item.url;
+  if (!url) return toast('У этой картинки нет ссылки на источник');
+  try {
+    if (!await window.api.openExternal(url)) throw new Error('система отказалась открыть ссылку');
+  } catch (err) {
+    toast('Не удалось открыть: ' + err.message);
+  }
+}
+
 async function downloadItem(item) {
   try {
     const target = await window.api.download({
@@ -423,7 +434,7 @@ async function downloadItem(item) {
     });
     toast('Скачано: ' + target.split(/[\\/]/).pop());
   } catch (err) {
-    toast('Не удалось скачать: ' + err.message);
+    toast('Не скачалось: ' + err.message + ' — открой «Источник» и сохрани вручную');
   }
 }
 
@@ -456,7 +467,7 @@ $('lbDownload').addEventListener('click', () => { if (state.visible[state.lbInde
 $('lbFav').addEventListener('click', () => { if (state.visible[state.lbIndex]) { toggleFav(state.visible[state.lbIndex]); updateLightbox(); } });
 $('lbOpen').addEventListener('click', () => {
   const item = state.visible[state.lbIndex];
-  if (item?.page) window.api.openExternal(item.page);
+  if (item) openSource(item);
 });
 $('lbSimilar').addEventListener('click', () => {
   const item = state.visible[state.lbIndex];

@@ -58,16 +58,34 @@ ipcMain.handle('pick-folder', async () => {
   return result.canceled ? null : result.filePaths[0];
 });
 
-ipcMain.handle('download', async (_event, { url, name, folder }) => {
-  const res = await fetch(url, {
-    headers: { 'User-Agent': UA, Referer: new URL(url).origin + '/' },
-    signal: AbortSignal.timeout(30000)
-  });
+function refererFor(url) {
+  const host = new URL(url).hostname.toLowerCase();
+  const rules = {
+    pinimg: 'https://www.pinterest.com/',
+    pinterest: 'https://www.pinterest.com/',
+    artstation: 'https://www.artstation.com/',
+    deviantart: 'https://www.deviantart.com/',
+    wixmp: 'https://www.deviantart.com/',
+    yandex: 'https://yandex.com/',
+    bing: 'https://www.bing.com/',
+    wikimedia: 'https://commons.wikimedia.org/'
+  };
+  return Object.entries(rules).find(([key]) => host.includes(key))?.[1] || `${new URL(url).origin}/`;
+}
+
+async function fetchImage(url, referer) {
+  const headers = { 'User-Agent': UA, Accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8' };
+  if (referer) headers.Referer = referer;
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(45000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const bytes = Buffer.from(await res.arrayBuffer());
-  const type = res.headers.get('content-type') || '';
+  const type = (res.headers.get('content-type') || '').split(';')[0];
+  if (type.startsWith('text/')) throw new Error('сервер вернул HTML вместо картинки');
+  return { bytes: Buffer.from(await res.arrayBuffer()), type };
+}
+
+async function saveImage(bytes, type, url, name, folder) {
   const ext = /\.(jpe?g|png|gif|webp|bmp)(?:$|\?)/i.exec(url)?.[1]?.toLowerCase()
-    || ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' })[type.split(';')[0]]
+    || ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp' })[type]
     || 'jpg';
   const safe = String(name || 'image').replace(/[^\p{L}\p{N} _-]/gu, '_').slice(0, 70) || 'image';
   const dir = folder && folder.trim() ? folder : path.join(app.getPath('pictures'), 'ArtHunter');
@@ -76,13 +94,25 @@ ipcMain.handle('download', async (_event, { url, name, folder }) => {
   for (let i = 1; ; i++) {
     try {
       await fs.writeFile(target, bytes, { flag: 'wx' });
-      break;
+      return target;
     } catch (err) {
       if (err.code !== 'EEXIST') throw err;
       target = path.join(dir, `${safe} (${i}).${ext}`);
     }
   }
-  return target;
+}
+
+ipcMain.handle('download', async (_event, { url, name, folder }) => {
+  let lastError;
+  for (const referer of [refererFor(url), undefined, 'https://www.google.com/']) {
+    try {
+      const { bytes, type } = await fetchImage(url, referer);
+      return await saveImage(bytes, type, url, name, folder);
+    } catch (err) { lastError = err; }
+  }
+  throw lastError || new Error('не удалось скачать изображение');
 });
 
-ipcMain.handle('open-external', (_event, url) => shell.openExternal(url));
+ipcMain.handle('open-external', async (_event, url) => {
+  try { await shell.openExternal(url); return true; } catch { return false; }
+});
