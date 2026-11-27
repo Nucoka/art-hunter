@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArtHunter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.6 5.6a5 5 0 0 0-7.1 0L12 7.1l-1.5-1.5a5 5 0 0 0-7.1 7.1l1.5 1.5L12 21l7.1-6.8 1.5-1.5a5 5 0 0 0 0-7.1Z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 17v3h16v-3"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6m0-6-9 9M18 14v5H5V6h5"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9 7 7m10 10 2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.7 5.4L19 10l-5.3 1.6L12 17l-1.7-5.4L5 10l5.3-1.6L12 3Z"/></symbol>
+    <symbol id="i-min" viewBox="0 0 24 24"><path d="M4 12h16"/></symbol>
+    <symbol id="i-max" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/></symbol>
+    <symbol id="i-restore" viewBox="0 0 24 24"><rect x="3" y="7" width="13" height="13" rx="1"/><path d="M8 7V4h13v13h-3"/></symbol>
+  </svg>
+
+  <div class="app">
+    <header id="topbar" class="topbar">
+      <button id="viewFind" class="brand" type="button" title="К поиску">
+        <span class="brand-mark"><svg><use href="#i-spark"/></svg></span>
+        <span class="brand-name">ArtHunter</span>
+      </button>
+
+      <div class="search-wrap">
+        <form id="searchForm" class="search">
+          <svg class="search-icon"><use href="#i-search"/></svg>
+          <input id="searchInput" type="text" autocomplete="off" spellcheck="false" placeholder="Найти арты…  (mimi typh, кошка арт -gif)">
+          <button id="searchBtn" type="submit">Найти</button>
+        </form>
+        <div id="suggestions" class="suggestions hidden"></div>
+        <div id="queryHint" class="query-hint hidden"></div>
+      </div>
+
+      <div class="tools">
+        <button id="btnFilters" class="tool" type="button" title="Источники и фильтры"><svg><use href="#i-filter"/></svg></button>
+        <button id="viewFav" class="tool" type="button" title="Избранное"><svg><use href="#i-heart"/></svg><span id="favCount" class="pill">0</span></button>
+        <button id="btnSettings" class="tool" type="button" title="Настройки"><svg><use href="#i-settings"/></svg></button>
+      </div>
+
+      <div class="win-controls">
+        <button class="win-btn" data-win="min" type="button" title="Свернуть"><svg><use href="#i-min"/></svg></button>
+        <button id="winMax" class="win-btn" data-win="max" type="button" title="Развернуть / свернуть в окно">
+          <svg class="max"><use href="#i-max"/></svg><svg class="restore"><use href="#i-restore"/></svg>
+        </button>
+        <button class="win-btn close" data-win="close" type="button" title="Закрыть"><svg><use href="#i-close"/></svg></button>
+      </div>
+    </header>
+
+    <main class="content">
+      <div id="grid" class="grid"></div>
+      <div id="empty" class="empty hidden">
+        <div class="empty-icon"><svg><use href="#i-search"/></svg></div>
+        <h2>Пока пусто</h2>
+        <p>Введи запрос или отключи лишние фильтры.</p>
+      </div>
+      <div id="loader" class="loader hidden"><span class="spinner"></span> Ищу…</div>
+      <button id="loadMore" class="load-more hidden" type="button">Загрузить ещё</button>
+    </main>
+  </div>
+
+  <div id="status" class="status-float">Введи запрос и нажми Enter</div>
+  <div id="errorLine" class="error-float"></div>
+
+  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+  <aside id="drawer" class="drawer">
+    <div class="drawer-head"><h2>Фильтры</h2><button id="closeFilters" class="tool" type="button" title="Закрыть"><svg><use href="#i-close"/></svg></button></div>
+    <label class="smart-toggle"><input id="smartSearch" type="checkbox" checked> Умный поиск <small>убирает мусор и опечатки</small></label>
+    <section class="side-block">
+      <h3>Источники</h3>
+      <div id="sourceFilters" class="source-list"></div>
+    </section>
+    <section class="side-block">
+      <h3>Параметры</h3>
+      <label>Минимальная ширина
+        <select id="minWidth"><option value="0">Любая</option><option value="500">500 px</option><option value="1000">1000 px</option><option value="2000">2000 px</option></select>
+      </label>
+      <label>Ориентация
+        <select id="orientation"><option value="any">Любая</option><option value="landscape">Горизонтальная</option><option value="portrait">Вертикальная</option><option value="square">Квадрат</option></select>
+      </label>
+      <label>Формат
+        <select id="format"><option value="any">Любой</option><option value="jpg">JPG</option><option value="png">PNG</option><option value="gif">GIF</option><option value="webp">WebP</option></select>
+      </label>
+      <label>Сортировка
+        <select id="sort"><option value="relevance">По релевантности</option><option value="size">По размеру</option><option value="source">По источнику</option></select>
+      </label>
+      <button id="resetFilters" class="ghost-btn" type="button">Сбросить всё</button>
+    </section>
+    <section class="side-block">
+      <h3>Теги <span id="tagCount" class="muted"></span></h3>
+      <div id="tagCloud" class="tag-cloud"></div>
+    </section>
+    <section class="side-block">
+      <h3>История</h3>
+      <div id="history" class="history"></div>
+    </section>
+    <button id="restoreHidden" class="ghost-btn" type="button">Вернуть скрытое (0)</button>
+  </aside>
+
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head"><h2>Настройки</h2><button id="closeSettings" class="tool" type="button"><svg><use href="#i-close"/></svg></button></div>
+      <h3>Папка загрузок</h3>
+      <div class="folder-row">
+        <input id="folderInput" type="text" placeholder="По умолчанию: Картинки/ArtHunter">
+        <button id="pickFolder" class="ghost-btn" type="button"><svg><use href="#i-folder"/></svg> Выбрать</button>
+      </div>
+
+      <h3>Оформление</h3>
+      <p class="hint">Меняется сразу. Всё сохраняется автоматически.</p>
+      <div class="theme-grid">
+        <div class="theme-presets">
+          <button type="button" data-preset="dark">Тёмная</button>
+          <button type="button" data-preset="light">Светлая</button>
+          <button type="button" data-preset="neon">Неон</button>
+          <button type="button" data-preset="berry">Ягодная</button>
+          <button type="button" data-preset="mint">Мята</button>
+          <button type="button" data-preset="graphite">Графит</button>
+        </div>
+        <label>Фон приложения <input id="thBg" type="color"></label>
+        <label>Цвет панелей <input id="thPanel" type="color"></label>
+        <label>Акцент <input id="thAccent" type="color"></label>
+        <label>Акцент второй <input id="thAccent2" type="color"></label>
+        <label>Прозрачность панелей <span id="thPanelAlphaVal"></span><input id="thPanelAlpha" type="range" min="20" max="100"></label>
+        <label>Прозрачность шапки <span id="thTopAlphaVal"></span><input id="thTopAlpha" type="range" min="20" max="100"></label>
+        <label>Закругление <span id="thRadiusVal"></span><input id="thRadius" type="range" min="0" max="24"></label>
+        <label>Размер плитки <span id="thCellVal"></span><input id="thCell" type="range" min="130" max="300"></label>
+        <label>Картинка в плитке <select id="thFit"><option value="contain">Целиком</option><option value="cover">Заполнить</option></select></label>
+        <label>Толщина линий <span id="thLineVal"></span><input id="thLine" type="range" min="1" max="3" step="0.1"></label>
+        <label>Прозрачность окна <span id="thWindowAlphaVal"></span><input id="thWindowAlpha" type="range" min="30" max="100"></label>
+        <label>Закругление окна <span id="thWindowRadiusVal"></span><input id="thWindowRadius" type="range" min="0" max="32"></label>
+      </div>
+      <button id="resetTheme" class="ghost-btn" type="button">Сбросить оформление</button>
+
+      <div class="modal-foot">
+        <button id="clearHistory" class="ghost-btn danger" type="button">Очистить историю</button>
+        <button id="saveSettings" class="primary-btn" type="button">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="lightbox" class="lightbox hidden">
+    <button id="lbClose" class="tool lb-close" type="button"><svg><use href="#i-close"/></svg></button>
+    <button id="lbPrev" class="tool lb-nav lb-prev" type="button"><svg><use href="#i-prev"/></svg></button>
+    <img id="lbImg" alt="">
+    <button id="lbNext" class="tool lb-nav lb-next" type="button"><svg><use href="#i-next"/></svg></button>
+    <div class="lb-panel">
+      <h2 id="lbTitle"></h2>
+      <div id="lbTags" class="lb-tags"></div>
+      <div class="lb-actions">
+        <button id="lbDownload" class="primary-btn" type="button"><svg><use href="#i-download"/></svg> Скачать</button>
+        <button id="lbFav" class="ghost-btn" type="button"><svg><use href="#i-heart"/></svg> В избранное</button>
+        <button id="lbOpen" class="ghost-btn" type="button"><svg><use href="#i-external"/></svg> Источник</button>
+        <button id="lbSimilar" class="ghost-btn" type="button"><svg><use href="#i-search"/></svg> Похожие</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="search-utils.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
